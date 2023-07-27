@@ -1,13 +1,20 @@
 # Portfolio
-This repository contains samples of my development work in Data Science and Data Analytics, showcasing both my education and
-on the job skills in a variety of areas, including
+This repository contains a portfolio of my work in Data Analytics and Data Science, showcasing both my
+education and on the job skills in a variety of technical areas, including
 
   - Excel workbooks
   - Power BI data modeling and visualizations
   - R and Python programming projects including linear regressions and other predictive models
   - SQL programming
   - SAS programming
+  - Formal presentation/report writing and delivery
 
-In some cases these samples were originally created during coursework while pursuing a BS in Data Science from Maryville
-University of St. Louis during 2020-2022 (graduated magna cum laude 3.74/4.00 GPA). In other cases the samples reflect
-development while on the job (due to the proprietary nature of my office work, data in some cases has been anonymized).
+This portfolio will grow and change over time as I work through my extensive collection of works. The
+initial entries are from coursework as I pursued different educational credentials:
+  - Certificate in Data Analytics from Cornell University (2018-2019)
+  - BS in Data Science from Maryville University of Saint Louis (2020-2022)
+
+Later additions to this portfolio will more deeply explore other related areas to demonstrate the breadth
+of my skills across a long storied career in the IT field. In all cases there will be introductory postings
+to provide background into each of these works, and source codes and datasets used when it is practical to
+include them.
