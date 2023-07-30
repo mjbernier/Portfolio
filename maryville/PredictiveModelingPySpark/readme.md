@@ -9,4 +9,4 @@ Language: PySpark
 Computing Environment: Databricks
 
 Dataset: The Forest Cover dataset published on Kaggle (https://www.kaggle.com/datasets/uciml/forest-cover-type-dataset) which contains observations of forest cover in 30 x 30 meter squares
-over four areas of the Roosevelt National Forest in Colorado.
+over four areas of the Roosevelt National Forest in Colorado. (due to size this dataset is not attached)
