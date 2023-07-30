@@ -1,0 +1,370 @@
+/*****************************************************************************/
+/* Michael Bernier                                                           */
+/* DSCI 307 Spring 2022                                                      */
+/* Week 8 Final Project                                                      */
+/*****************************************************************************/
+
+
+/*****************************************************************************/
+/* Part 1 - Import Data into Dataset                                         */
+/*****************************************************************************/
+DATA house_price;
+	INFILE '/home/u60653141/myfiles/Week8/Bay Area House Price.csv' DSD FIRSTOBS=2;
+	INPUT address $ info $ z_address $ bathrooms bedrooms finishedsqft lastsolddate : mmddyy10.
+		  lastsoldprice latitude longitude neighborhood $ totalrooms usecode $ yearbuilt
+		  zestimate zipcode zpid;
+RUN;
+
+
+/*****************************************************************************/
+/* Part 2 - Drop the variables: address, info, z_address, neighborhood,      */
+/* latitude, longitude, and zpid both using Data Statement and PROC SQL.     */
+/* Name the new data set as house_price.                                     */
+/*****************************************************************************/
+DATA house_price;
+	SET house_price;
+	DROP address info z_address neighborhood latitude longitude zpid;
+RUN;
+
+PROC PRINT DATA=house_price (OBS=10) NOOBS;
+TITLE 'Part 2 - Drop variables address, info, z_address, neighborhood, latitude, longitude, and zpid using DATA statement';
+TITLE2 '(first 10 observations only)';
+RUN;
+
+
+PROC SQL;
+	CREATE TABLE house_price AS
+	SELECT *
+	FROM house_price (DROP address info z_address neighborhood latitude longitude zpid);
+QUIT;
+
+TITLE1 'Part 2 - Drop variables address, info, z_address, neighborhood, latitude, longitude, and zpid using PROC SQL';
+TITLE2 '(first 10 observations only)';
+PROC SQL;
+	SELECT *
+	FROM house_price (OBS=10);
+QUIT;
+
+
+/*****************************************************************************/
+/* Part 3 - Add a new variable price_per_square_foot defined by              */
+/* lastsoldprice/finishedsqft both using Data Statement and PROC SQL.        */
+/*****************************************************************************/
+DATA house_price;
+	SET house_price;
+	price_per_square_foot = lastsoldprice/finishedsqft;
+RUN;
+
+PROC PRINT DATA=house_price (OBS=10) NOOBS;
+TITLE 'Part 3 - Add new variable price_per_square_foot using DATA statement';
+TITLE2 '(first 10 observations only)';
+FORMAT price_per_square_foot COMMA15.2;
+RUN;
+
+TITLE1 'Part 3 - Add new variable price_per_square_foot using PROC SQL';
+TITLE2 '(first 10 observations only)';
+PROC SQL;
+	SELECT *, price_per_square_foot = lastsoldprice/finishedsqft FORMAT=COMMA15.2
+	FROM house_price (OBS=10);
+QUIT;
+
+
+/*****************************************************************************/
+/* Part 4 - Find the average of lastsoldprice by zipcode both using Data     */
+/* Statement and PROC SQL.                                                   */
+/*****************************************************************************/
+
+/* Average by zipcode using DATA statement */
+/*******************************************/
+PROC SORT DATA=house_price;
+	BY zipcode;
+RUN;
+
+DATA avg_soldprice_by_zip;
+	SET house_price (KEEP = zipcode lastsoldprice);
+	BY zipcode;
+	
+	RETAIN n_houses sum_soldprice avg_soldprice;
+	IF first.zipcode THEN DO;
+		n_houses = 1;
+		sum_soldprice = lastsoldprice;
+		avg_soldprice = lastsoldprice;
+	END;
+	ELSE DO;
+		n_houses = n_houses + 1;
+		sum_soldprice = sum_soldprice + lastsoldprice;
+		avg_soldprice = sum_soldprice / n_houses;		
+	END;
+ 
+	IF last.zipcode THEN OUTPUT;
+	DROP lastsoldprice n_houses sum_soldprice;
+	FORMAT avg_soldprice comma15.2; 
+RUN;
+
+PROC SORT DATA=avg_soldprice_by_zip;
+	BY zipcode;
+RUN;
+
+PROC PRINT DATA=avg_soldprice_by_zip NOOBS;
+TITLE 'Part 4 - Find average of lastsoldprice by zipcode using Data statement';
+RUN;
+
+/* Average by zipcode using PROC SQL */
+/*************************************/
+PROC SQL;
+	CREATE TABLE avg_soldprice_by_zip_sql as
+		SELECT zipcode,
+			AVG(lastsoldprice) AS avg_soldprice FORMAT=comma15.2
+		FROM house_price
+		GROUP BY zipcode
+		ORDER BY zipcode ASC;
+QUIT;
+
+PROC PRINT DATA=avg_soldprice_by_zip_sql NOOBS;
+TITLE 'Part 4 - Find average of lastsoldprice by zipcode using PROC SQL';
+RUN;
+
+
+/*****************************************************************************/
+/* Part 5 -  Find the average of lastsoldprice by usecode, totalrooms, and   */
+/* bedrooms both using Data Statement and PROC SQL.                          */
+/*****************************************************************************/
+
+/* Average by usecode using DATA statement */
+/*******************************************/
+PROC SORT DATA=house_price;
+	BY usecode totalrooms bedrooms;
+RUN;
+
+DATA avg_soldprice_by_usecode;
+	SET house_price (KEEP = usecode totalrooms bedrooms lastsoldprice);
+	BY usecode totalrooms bedrooms;
+	
+	RETAIN n_houses sum_soldprice avg_soldprice;
+	
+		IF first.bedrooms THEN DO;
+			n_houses = 1;
+			sum_soldprice = lastsoldprice;
+			avg_soldprice = lastsoldprice;
+		END;
+		ELSE DO;
+			n_houses = n_houses + 1;
+			sum_soldprice = sum_soldprice + lastsoldprice;
+			avg_soldprice = sum_soldprice / n_houses;		
+		END;
+ 
+		IF last.bedrooms THEN OUTPUT;
+	
+	DROP lastsoldprice n_houses sum_soldprice;
+	FORMAT avg_soldprice comma15.2; 
+RUN;
+
+PROC SORT DATA=avg_soldprice_by_usecode;
+	BY usecode DESCENDING totalrooms bedrooms;
+RUN;
+
+PROC PRINT DATA=avg_soldprice_by_usecode NOOBS;
+TITLE 'Part 5 - Find average of lastsoldprice by usecode, totalrooms, bedrooms using Data statement';
+RUN;
+
+/* Average by usecode, totalrooms, bedrooms using PROC SQL */
+/***********************************************************/
+PROC SQL;
+	CREATE TABLE avg_soldprice_usecode_sql as
+		SELECT usecode, totalrooms, bedrooms,
+			AVG(lastsoldprice) AS avg_soldprice FORMAT=comma15.2
+		FROM house_price
+		GROUP BY usecode, totalrooms, bedrooms
+		ORDER BY usecode ASC, totalrooms DESC, bedrooms ASC;
+QUIT;
+
+PROC PRINT DATA=avg_soldprice_usecode_sql NOOBS;
+TITLE 'Part 5 - Find average of lastsoldprice by usecode, totalrooms, bedrooms using PROC SQL';
+RUN;
+
+
+/*****************************************************************************/
+/* Part 6 - Plot the bar charts for bathrooms, bedrooms, usecode, totalrooms */
+/* respectively, and save the bar chart of bedrooms as bedrooms.png.         */
+/*****************************************************************************/
+ODS LISTING GPATH ='/home/u60653141/myfiles/Week8/';
+ODS GRAPHICS / RESET
+    HEIGHT = 5IN WIDTH = 8IN;
+
+PROC SGPLOT DATA = house_price NOAUTOLEGEND;
+    VBAR bathrooms / GROUP=bathrooms BARWIDTH=0.5 GROUPDISPLAY=CLUSTER;
+    LABEL bathrooms = '# Bathrooms';
+    TITLE1 'Part 6 - Bar chart for bathrooms';
+RUN;
+
+ODS GRAPHICS / RESET
+    IMAGENAME = 'bedrooms'
+    OUTPUTFMT = PNG
+    HEIGHT = 5IN WIDTH = 8IN;
+PROC SGPLOT DATA = house_price NOAUTOLEGEND;
+    VBAR bedrooms / GROUP=bedrooms BARWIDTH=0.5 GROUPDISPLAY=CLUSTER;
+    LABEL bedrooms = '# Bedrooms';
+    TITLE1 'Part 6 - Bar chart for bedrooms';
+RUN;
+
+PROC SGPLOT DATA = house_price NOAUTOLEGEND;
+    VBAR usecode / GROUP=usecode BARWIDTH=0.5 GROUPDISPLAY=CLUSTER;
+    LABEL usecode = 'Housing type';
+    TITLE1 'Part 6 - Bar chart for usecode';
+RUN;
+
+PROC SGPLOT DATA = house_price NOAUTOLEGEND;
+    VBAR totalrooms / GROUP=totalrooms BARWIDTH=0.5 GROUPDISPLAY=CLUSTER;
+    LABEL totalrooms = 'Total Rooms';
+    TITLE1 'Part 6 - Bar chart for totalrooms';
+RUN;
+
+
+/*****************************************************************************/
+/* Part 7 - Plot the Histogram, boxplot for lastsoldprice, zestimate         */
+/* respectively. Are they normal or skewed? What’s the median of the         */
+/* lastsoldprice? What’s the median of the zestimate?                        */
+/*****************************************************************************/
+TITLE 'Part 7 - Plot Histogram, Box Plot, for lastsoldprice and zestimate';
+PROC UNIVARIATE DATA=house_price NORMAL PLOT;
+	var lastsoldprice zestimate;
+RUN;
+
+/*
+/* RESPONSES TO QUESTIONS
+/* Are the histogram and box plot for lastsoldprice skewed? YES
+/* Are the histogram and box plot for zestimate skewed? YES
+/* What is the median of lastsoldprice? 990,000
+/* What is the median of zestimate? 1,230,758
+*/
+
+
+/*****************************************************************************/
+/* Part 8 - Calculate the correlation coefficients of all numerical          */
+/* variables with the variable zesitmate, and plot the scatter plot and      */
+/* matrix. (Hint: Use PLOTS(MAXPOINTS=none)=scatter in PROC CORR so that     */
+/* the scatter graph is shown. Otherwise you may not see the graph because   */
+/* the data is very large.)                                                  */
+/*****************************************************************************/
+PROC CORR DATA=house_price PLOTS(MAXPOINTS=none) = SCATTER (NVAR=ALL) RANK;
+	VAR bathrooms bedrooms totalrooms finishedsqft lastsolddate lastsoldprice yearbuilt zipcode price_per_square_foot;
+	WITH zestimate;
+	TITLE 'Part 8 - Correlations of all numerical variables with zestimate - Scatter Plot';
+RUN;
+
+PROC CORR DATA=house_price PLOTS(MAXPOINTS=none) = MATRIX (NVAR=ALL) RANK;
+	WITH zestimate;
+	TITLE 'Part 8 - Correlations of all numerical variables with zestimate - Matrix';
+RUN;
+
+
+/*****************************************************************************/
+/* Part 9 - Find a regression model for zestimate with the first three most  */
+/* correlated variables.                                                     */
+/*****************************************************************************/
+ODS GRAPHICS OFF;
+PROC REG DATA=house_price;
+    MODEL zestimate = lastsoldprice finishedsqft bathrooms;
+    title 'Part 9 - Regression Model for zestimate with first three most correlated variables';
+RUN;
+
+
+/*****************************************************************************/
+/* Part 10 - Find a regression model for zestimate with the first five most  */
+/* correlated variables.                                                     */
+/*****************************************************************************/
+ODS GRAPHICS OFF;
+PROC REG DATA=house_price;
+    MODEL zestimate = lastsoldprice finishedsqft bathrooms bedrooms yearbuilt;
+    title 'Part 10 - Regression Model for zestimate with first five most correlated variables';
+RUN;
+
+
+/*****************************************************************************/
+/* Part 11 - Compare the adjusted R^2 in the two models from question 9) and */
+/* 10). The model that has a bigger adjusted R^2 is better.                  */
+/*****************************************************************************/
+
+/*
+/* Adjusted R^2 with three variables = 0.8319
+/* Adjusted R^2 with five variables = 0.8328
+/*
+/* The model with five variables (from Part 10) is better
+*/
+
+
+/*****************************************************************************/
+/* Part 12 - Use the better model from question 11) to predict the house     */
+/* prices given the values of independent variables. (You name the values of */
+/* independent variables for 4 houses)                                       */
+/*****************************************************************************/
+ODS GRAPHICS OFF;
+PROC REG DATA=house_price OUTTEST = pricetest NOPRINT;
+    MODEL zestimate = lastsoldprice finishedsqft bathrooms bedrooms yearbuilt;
+RUN;
+
+DATA newentries;
+	INPUT yearbuilt bedrooms bathrooms finishedsqft lastsoldprice;
+	DATALINES;
+1972 3 2 1400 175000
+2000 4 4.5 2500 325000
+1983 2 1.5 975 99000
+1948 3 1 1100 75000
+;
+RUN;
+
+PROC SCORE DATA=newentries SCORE=pricetest OUT=NewPrices TYPE=parms NOSTD PREDICT;
+   VAR yearbuilt bedrooms bathrooms finishedsqft lastsoldprice;
+RUN;
+
+PROC PRINT DATA=NewPrices;
+   TITLE1 'Part 12 - Predicted zestimates for Four New Houses of My Choosing';
+RUN;
+
+
+/*****************************************************************************/
+/* Part 13 - Export the predictive values from question 12) as an excel file */
+/* named ‘prediction.xlsx’                                                   */
+/*****************************************************************************/
+PROC EXPORT DATA=NewPrices
+	DBMS=XLSX
+	OUTFILE='/home/u60653141/myfiles/Week8/prediction.xlsx' 
+	REPLACE;
+RUN;
+
+
+/*****************************************************************************/
+/* Part 14 - Create a macro named average with two parameters category and   */
+/* price. In the macro, firstly use PROC MEANS for the data set house_price  */
+/* to calculate the mean of &price by &category. In the PROC MEANS, use      */
+/* option NOPRINT, and let OUT=averageprice. Then use PROC PRINT to print    */
+/* the data averageprice using the macro variables in the TITLE.             */
+/*****************************************************************************/
+%MACRO average(category=, price=);
+	PROC MEANS DATA=house_price NOPRINT;
+	CLASS &category;
+	VAR &price;
+	OUTPUT OUT=averageprice MEAN(&price)=Avg_Price;
+	RUN;
+	PROC PRINT DATA=averageprice NOOBS;
+	TITLE "Parts 14/15/16 - Average of &price by &category";
+	RUN;
+%MEND average;
+
+
+/*****************************************************************************/
+/* Part 15 - Call the macro %average(category=zipcode,                       */
+/* price=price_per_square_foot).                                             */
+/*****************************************************************************/
+%average(category = zipcode, price = price_per_square_foot);
+
+
+/*****************************************************************************/
+/* Part 16 - Call the macro %average(category=totalrooms, price=zestimate).  */
+/*****************************************************************************/
+%average(category = totalrooms, price = zestimate);
+
+
+/*****************************************************************************/
+/* End of Project                                                            */
+/*****************************************************************************/
