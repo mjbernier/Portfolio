@@ -1,0 +1,311 @@
+---
+title: "Final Project"
+author: "Michael Bernier"
+date: '2022-05-01'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Scenario
+
+You are hired as a Senior Data Scientist in Bank of Universe (BOU). BOU is a private company founded twenty years ago and now has more than 5,000 employees. BOU did all the research, chose the insurance company, and picked plan options for employees twenty years ago. The new CEO, Mr. Buffet, wants to make changes and offer self-funded Health Plans (SHP) starting next year. SHP is cheaper for BOU, since BOU dies not have to pay for the separate insurance carrier by taking some risks.  BOU has received several years' medical costs in file insurance.csv from the current insurance carrier. 
+
+Download the insurance.csv file. The data source is Kaggle. The file contains the following columns: 
+
+- age: age of primary beneficiary.
+- sex: insurance contractor gender, female or male.
+- bmi: Body mass index, providing an understanding of body, weights that are relatively high or low relative to height, objective index of body weight (kg / m ˆ 2) using the ratio of height to weight, ideally 18.5 to 24.9.
+- children: Number of children covered by health insurance / Number of dependents.
+- smoker: smoking.
+- region: the beneficiary’s residential area in the US, northeast, southeast, southwest, northwest.
+- charges: individual medical costs billed by health insurance
+
+***
+
+### Part 1 - Data Preparation
+
+***
+
+#### Step a - Open a rmd, load libraries, and load the dataset
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tree)
+library(randomForest)
+library(factoextra)
+library(cluster)
+insurance <- read.csv("insurance.csv")
+head(insurance)
+summary(insurance)
+```
+
+*** 
+
+#### Step b(1) - In the data frame, log transform the variable charges and name it as log_charges
+```{r}
+insurance$log_charges <- log(insurance$charges)
+summary(insurance)
+```
+***
+
+#### Step b(2) - convert columns sex, smoker, and region to factors
+```{r}
+insurance$sex <- as.factor(insurance$sex)
+insurance$smoker <- as.factor(insurance$smoker)
+insurance$region <- as.factor(insurance$region)
+summary(insurance)
+```
+
+***
+
+#### Step c - use the sample() function with set.seed equal to 1 to generate row indexes for your training and test sets, with 70% of the row indexes for your training set and 30% for your test set. Do not use any method other than the sample() function for splitting your data.
+```{r}
+set.seed(1)
+index <- sample(1:nrow(insurance), nrow(insurance)*0.70)
+train <- insurance[index,]
+test <- insurance[-index,]
+```
+
+***
+
+### Part 2 - Build a multiple regression model
+
+***
+
+#### Step a - Perform multiple linear regression with log_charges as the response and the predictors are age, sex, bmi, children, smoker, and region. Print out the results using the summary () function. Use the training dataset you created in #1 above. 
+```{r}
+insurance.multi.regression <- lm(log_charges ~ age + sex + bmi + children + smoker + region, data = train)
+summary(insurance.multi.regression)
+```
+
+***
+
+#### Step b - Is there a relationship between the predictors and the response?
+
+
+Yes, there is a relationship between several of the predictors and the response.
+
+- Strong relationships with age, bmi, children, smoker = yes, and region = southeast
+- Moderate relationship with region = southwest
+- Minor relationships with sex = male and region = northwest.
+
+***
+
+#### Step c - Does sex have a statistically signficant relationship to the response?
+
+For sex = male, the relationship is relatively weak at -0.057 and is only marginally significant at the 0.01 level.
+
+***
+
+#### Step d - Compare the test error of the model in 2a. Report the RMSE.
+```{r}
+yhat_mr = predict(insurance.multi.regression, newdata = test)
+insurance.multi.regression.test = test[,"log_charges"]
+RMSE_mr <- mean((yhat_mr-insurance.multi.regression.test)^2)
+print(RMSE_mr)
+```
+
+***
+
+### Part 3 - Build a regression tree model
+
+***
+
+#### Step a - Build a regression tree model using function tree (), where log_charges is the response and the predictors are age, sex, bmi, children, smoker, and region. 
+```{r}
+insurance.tree.model <- tree(log_charges ~ age + sex + bmi + children + smoker + region, data=train)
+summary(insurance.tree.model)
+```
+
+***
+
+#### Step b - Find the optimal tree and display the results in a graphic. Report the best size.
+```{r}
+cv.insurance.tree.model = cv.tree(insurance.tree.model)
+plot(cv.insurance.tree.model$size, cv.insurance.tree.model$dev, type = 'b')
+```
+
+- The optimal tree size is 6
+
+***
+
+#### Step c - Justify the number you picked for the optimal tree with regard to the principle of the variance-bias trade-off.
+
+Based on the CV plot for the tree, the slope of the curve changes significantly between 5 and 6, but is relatively flat between 6 and 7. This would indicate the variance will become less statistically significant as the number of branches increases. 
+
+
+***
+
+#### Step d - Prune the tree using the optimal size found in 3b
+```{r}
+prune.insurance.tree.model = prune.tree(insurance.tree.model, best = 6)
+```
+
+***
+
+#### Step e - Plot the best tree model and give labels
+```{r}
+plot(prune.insurance.tree.model)
+text(prune.insurance.tree.model, pretty = 0)
+```
+
+***
+
+#### Step f - Calculate the best RMSE for the best model
+```{r}
+yhat_tr = predict(prune.insurance.tree.model, newdata = test)
+insurance.tree.model.test = test[,"log_charges"]
+RMSE_tr <- mean((yhat_tr-insurance.tree.model.test)^2)
+print(RMSE_tr)
+```
+
+***
+
+### Part 4 - Build a random forest model
+
+***
+
+#### Step a - Build a random forest model using function randomForest(), where log_charges is the response and the predictors are age, sex, bmi, children, smoker, and region.
+```{r}
+insurance.forest.model <- randomForest(log_charges ~ age + sex + bmi + children + smoker + region, data=train, importance = TRUE)
+summary(insurance.forest.model)
+```
+
+***
+
+#### Step b - Compute the test error (using the test data set).
+```{r}
+yhat.rf = predict(insurance.forest.model, newdata = test)
+insurance.forest.model.test = test[,"log_charges"]
+RMSE_rf <- mean((yhat.rf-insurance.forest.model.test)^2)
+print(RMSE_rf)
+```
+
+***
+
+#### Step c - Extract variable importance measure using the importance() function.
+```{r}
+importance(insurance.forest.model)
+```
+
+***
+
+#### Step d - Plot the variable importance using the function, varImpPlot(). Which are the top 3 important predictors in this model?
+```{r}
+varImpPlot(insurance.forest.model)
+```
+
+The top three important predictors in this model based on MSE are smoker, age, and children, and based on Node Purity they are smoker, age, and bmi.
+
+***
+
+### Part 5 - Perform the K-means cluster analysis
+
+***
+
+#### Step a - Remove the sex, smoker, and region, since they are not numerical values.
+```{r}
+insurance.cluster <- subset(insurance, select = -c(sex, smoker, region))
+head(insurance.cluster)
+```
+
+***
+
+#### Step b - Determine the optimal number of clusters. Justify your answer.
+```{r}
+set.seed(1)
+fviz_nbclust(insurance.cluster, kmeans, method = "gap_stat")
+fviz_nbclust(insurance.cluster, kmeans, method = "silhouette")
+fviz_nbclust(insurance.cluster, kmeans, method = "wss")
+```
+
+Based on the results of the Silhouette and Sum of Squares tests, the optimal number of clusters is 2
+
+***
+
+#### Step c - Perform k-means clustering using the optimal number of clusters from 5b.
+```{r}
+km.insurance.cluster <- kmeans(insurance.cluster, 2, nstart = 25)
+```
+
+****
+
+#### Step d - Visualize the clusters in different colors.
+```{r}
+fviz_cluster(km.insurance.cluster, data = insurance.cluster)
+```
+
+***
+
+### Part 6 - Putting it all together
+
+***
+
+#### Step a - For predicting insurance charges, your supervisor asks you to choose the best model among the multiple regression, regression tree, and random forest. Compare their test RMSEs of the models generated above. Display the names for these types of these models, using these labels: Multiple Linear Regression, Regression Tree, and Random Forest and their corresponding test RMSEs in a data.frame. Label the column in your data frame with the labels as Model.Type, and label the column with the test RMSEs as Test.MSE and round the data in this column to 4 decimal places. Present the formatted data to your supervisor and recommend which model is best and why. 
+```{r}
+Model.Type <- c("Multiple Linear Regression","Regression Tree","Random Forest")
+Test.MSE <- c(round(RMSE_mr,digits=4),round(RMSE_tr,digits=4),round(RMSE_rf,digits=4))
+model_results <- data.frame(Model.Type, Test.MSE)
+print(model_results, row.names = FALSE)
+```
+
+A Random Forest model is the recommended choice for predicting insurance charges. Its use will result in the least amount of error generated for the data provided, resulting in more accurate predictions.
+
+***
+
+#### Step b - Another supervisor from the sales department has requested your help to create a predictive model that his sales representatives can use to explain to clients what the potential costs could be for different kinds of customers, and they need an easy and visual way of explaining it. What model would you recommend, and what are the benefits and disadvantages of your recommended model compared to other models?
+
+I would recommend the Regression Tree model for sales representatives to use. It is the most visual of the models, and is easy to follow the breakdowns of results, making it a good choice for explaining potential costs to a client. The downside of using it is in that it has slightly less accuracy than the Random Forest model; but, if the understanding is that it should be used for estimation purposes only and not for hard negotiated contracts, it should be acceptable.
+
+***
+
+#### Step c - The supervisor from the sales department likes your regression tree model. But she says that the salespeople say the numbers in it are way too low and suggests that maybe the numbers on the leaf nodes predicting charges are log transformations of the actual charges. You realize that in step 1.b of this project that you had indeed transformed charges using the log function. And now you realize that you need to reverse the transformation in your final output. The solution you have is to reverse the log transformation of the variables in the regression tree model you created and redisplay the result.
+
+##### Follow these steps:
+- Copy your pruned tree model to a new variable name.
+- In your new variable, find the data.frame named “frame” and reverse the log transformation on the data.frame column yval using the exp() function. (If the copy of your pruned tree model is named copy_of_my_pruned_tree, then the data frame is accessed as copy_of_my_pruned_tree$frame, and it works just like a normal data frame.).
+- After you reverse the log transform on the yval column, then replot the tree with labels.
+
+```{r}
+unlog.tree.model <- prune.insurance.tree.model
+print(unlog.tree.model$frame$yval)
+unlog.tree.model$frame$yval <- exp(unlog.tree.model$frame$yval)
+print(unlog.tree.model$frame$yval)
+plot(unlog.tree.model)
+text(unlog.tree.model, pretty = 0)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
