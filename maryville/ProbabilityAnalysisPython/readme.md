@@ -1,6 +1,6 @@
 # Probability Analysis using Python
 
-This project was an assignment in a Python programming course which has several components:
+This project was an assignment in a Python programming course. It has several components:
 
 - Create a Stock Simulation function
 - Create an Annual Yield function to analyze the results of the Stock Simulation through multiple iterations
