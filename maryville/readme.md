@@ -8,7 +8,6 @@ Coursework samples span the following technical areas:
 - Python Programming
 - R Programming
 - SAS Programming
-- SQL Programming
 - PySpark Programming
 - Excel Formulas and Formatting
 - Report Writing / Formal Presentation
