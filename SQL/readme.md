@@ -2,6 +2,12 @@
 
 This project contains a sample of my work in SQL programming. While currently small, I intend to add more code over time.
 
+The current content includes examples of:
+- Basic table operations
+- Common Table Expressions (CTEs)
+- Inline Table Functions
+- Pivot Tables
+
 Language: Microsoft T-SQL (Transact-SQL)
 
 Environment: 
