@@ -12,4 +12,4 @@ Dataset: Annual Crop and Livestock Production and Yields by Country and Region, 
 
 Source: Food and Agriculture Organization (FAO) of the United Nations, https://fao.org/faostat/
 
-Note: this dataset is stored in the project as a SQL Backup (.bak) file
+Note: This dataset is provided in the form of a MS SQL Server Backup (.bak) file. Due to size, it has been compressed into a ZIP file.
