@@ -1,6 +1,6 @@
-# SQL Programming
+# Relational Database Query Operations in SQL
 
-This project contains a sample of my work in SQL programming. While currently small, I intend to add more code over time.
+This project contains a sample of my work in SQL programming using a relational database. While currently small, I intend to add more code over time.
 
 The current content includes examples of:
 - Basic table operations
