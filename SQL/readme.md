@@ -10,6 +10,6 @@ Environment:
 
 Dataset: Annual Crop and Livestock Production and Yields by Country and Region, 1961-2021
 
-Source: Food and Agriculture Organization (FAO) of the United Nations, (https://fao.org/faostat/)https://fao.org/faostat/
+Source: Food and Agriculture Organization (FAO) of the United Nations, https://fao.org/faostat/
 
-This dataset is stored in the project as a SQL Backup (.bak) file
+Note: this dataset is stored in the project as a SQL Backup (.bak) file
