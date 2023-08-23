@@ -1,6 +1,6 @@
 # SQL Programming
 
-This project contains a sample of my work in SQL programming. While currently small, I will be adding to it over time.
+This project contains a sample of my work in SQL programming. While currently small, I intend to add more code over time.
 
 Language: Microsoft T-SQL (Transaction SQL)
 
