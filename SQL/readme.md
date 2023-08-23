@@ -14,7 +14,7 @@ Environment:
 - Microsoft SQL Server 2019 Developer Edition
 - Microsoft SQL Server Management Studio (SSMS) v19.1
 
-Dataset: Annual Crop and Livestock Production and Yields by Country and Region, 1961-2021
+Dataset: Annual Crop and Livestock Production by Country and Region, 1961-2021
 
 Source: Food and Agriculture Organization (FAO) of the United Nations, https://fao.org/faostat/
 
